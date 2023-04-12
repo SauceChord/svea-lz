@@ -41,11 +41,15 @@ describe("Z85", function()
             end)
         end)
     end)
-    
+
     describe("decode", function()
         describe("with valid inputs", function()
             it("should decode an empty string into an empty string", function()
                 assert.is.same("", Z85.decode(""))
+            end)
+
+            it("should decode a one letter string into an empty string", function()
+                assert.is.same("", Z85.decode("f"))
             end)
 
             it("should decode a two letter string into one letter", function()
