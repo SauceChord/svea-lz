@@ -8,3 +8,8 @@ Via luarocks
 
 - busted
 - say
+
+Optional
+
+- LuaCov
+- CLuaCov
