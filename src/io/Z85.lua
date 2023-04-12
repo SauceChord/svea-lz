@@ -1,20 +1,19 @@
 local Z85 = {}
 
-local S85String = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#"
-
----@param base85 integer
----@return integer
-local function Base85ToS85Byte(base85)
-    return S85String:byte(base85 + 1)
+-- Initialize Lookup tables
+local _encode = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#"
+local _decode = { }
+for i = 1, #_encode do
+    _decode[_encode:byte(i)] = i-1
 end
 
 ---@param s string
----@param i integer
+---@param stringIndex integer
 ---@return string
-function Z85.encodeChunk(s, i)
-    local j = string.unpack(">I4", s, i)
-    local a, b, c, d, e = (j // 85 ^ 4) % 85, (j // 85 ^ 3) % 85, (j // 85 ^ 2) % 85, (j // 85) % 85, j % 85
-    return string.char(Base85ToS85Byte(a), Base85ToS85Byte(b), Base85ToS85Byte(c), Base85ToS85Byte(d), Base85ToS85Byte(e))
+function Z85.encodeChunk(s, stringIndex)
+    local v = string.unpack(">I4", s, stringIndex)
+    local a, b, c, d, e = (v // 85 ^ 4) % 85, (v // 85 ^ 3) % 85, (v // 85 ^ 2) % 85, (v // 85) % 85, v % 85
+    return string.char(_encode:byte(a+1), _encode:byte(b+1), _encode:byte(c+1), _encode:byte(d+1), _encode:byte(e+1))
 end
 
 ---@param s string
@@ -29,6 +28,35 @@ function Z85.encode(s)
     if charsMissingForChunk > 0 then
         s = s .. string.rep(string.char(0), 4 - charsMissingForChunk)
         chunks[#chunks + 1] = Z85.encodeChunk(s, unsafeChunk + 1):sub(1, charsMissingForChunk + 1)
+    end
+    return table.concat(chunks)
+end
+
+---@param s string
+---@param i integer
+---@return integer
+function Z85.decodeChunkToUInt32(s, i)
+    local v = string.unpack(">I5", s, i)
+    return _decode[v >> 32] * 85^4 + _decode[v >> 24 & 255] * 85^3 + _decode[v >> 16 & 255] * 85^2 + _decode[v >> 8 & 255] * 85 + _decode[v  & 255]
+end
+
+---@param s string
+---@return string
+function Z85.decode(s)
+    assert(type(s) == "string", "Can only decode strings but was passed: " .. type(s))
+    local chunks, unsafeChunk = {}, (#s // 5) * 5
+    for i = 1, unsafeChunk, 5 do
+        table.insert(chunks, string.pack(">I4", Z85.decodeChunkToUInt32(s, i)))
+    end
+    local charsMissingForChunk = #s - unsafeChunk
+    if charsMissingForChunk > 0 then
+        s = s .. string.rep("#", 5 - charsMissingForChunk)
+        local u32 = Z85.decodeChunkToUInt32(s, unsafeChunk + 1)
+        local remaining = {}
+        for char = 1, charsMissingForChunk - 1 do
+            remaining[char] = string.char(u32 >> (32 - char * 8) & 255)
+        end
+        table.insert(chunks, table.concat(remaining))
     end
     return table.concat(chunks)
 end
