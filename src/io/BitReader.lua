@@ -31,19 +31,27 @@ end
 
 function BitReader:readBits(width)
     assert_is_int(width, "width")
-    assert(width >= 0 and self.location + width <= math.min(64, self.bits), "Out of bounds error, can't read " .. width .. " bits")
+    assert(width > 0 and self.location + width <= math.min(64, self.bits), "Out of bounds error, can't read " .. width .. " bits")
     local result = 0
     local bitOffset = 0
     while width > 0 do
         local byteIndex = self.location // 8 + 1
         local bitIndex = self.location % 8
-        local readBitCount = math.min(8 - bitIndex, width)        
+        local readBitCount = math.min(8 - bitIndex, width)
         result = result | (self.bytes[byteIndex] >> bitIndex & ~(255 << readBitCount)) << bitOffset
         self.location = self.location + readBitCount
         width = width - readBitCount
         bitOffset = bitOffset + readBitCount
     end
     return result
+end
+
+function BitReader:readBool()
+    assert(self.location < self.bits, "Out of bounds error, can't read 1 bit")
+    local byteIndex = self.location // 8 + 1
+    local bitIndex = self.location % 8
+    self.location = self.location + 1
+    return (self.bytes[byteIndex] >> bitIndex & 1) == 1
 end
 
 return BitReader
