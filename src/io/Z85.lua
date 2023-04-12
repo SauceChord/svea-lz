@@ -50,8 +50,8 @@ function Z85.decode(s)
     end
     local charsMissingForChunk = #s - unsafeChunk
     if charsMissingForChunk > 0 then
-        s = s .. string.rep("#", 5 - charsMissingForChunk)
-        local u32 = Z85.decodeChunkToUInt32(s, unsafeChunk + 1)
+        s = s:sub(unsafeChunk + 1) .. string.rep("#", 5 - charsMissingForChunk)
+        local u32 = Z85.decodeChunkToUInt32(s, 1)
         local remaining = {}
         for char = 1, charsMissingForChunk - 1 do
             remaining[char] = string.char(u32 >> (32 - char * 8) & 255)
