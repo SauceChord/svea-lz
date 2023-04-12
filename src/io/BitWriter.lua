@@ -12,7 +12,6 @@ function BitWriter:writeBits(value, width)
         local byteIndex = self.bits // 8 + 1
         local bitIndex = self.bits % 8
         self.bytes[byteIndex] = (self.bytes[byteIndex] or 0) | value << bitIndex & 255
-        -- Update bit details
         local writtenBitCount = math.min(8 - bitIndex, width)
         self.bits = self.bits + writtenBitCount
         width = width - writtenBitCount
