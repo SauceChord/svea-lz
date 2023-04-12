@@ -22,12 +22,12 @@ function Z85.encode(s)
     assert(type(s) == "string", "Can only encode strings but was passed: " .. type(s))
     local chunks, unsafeChunk = {}, (#s // 4) * 4
     for i = 1, unsafeChunk, 4 do
-        chunks[#chunks + 1] = Z85.encodeChunk(s, i)
+        table.insert(chunks, Z85.encodeChunk(s, i))
     end
     local charsMissingForChunk = #s - unsafeChunk
     if charsMissingForChunk > 0 then
         s = s .. string.rep(string.char(0), 4 - charsMissingForChunk)
-        chunks[#chunks + 1] = Z85.encodeChunk(s, unsafeChunk + 1):sub(1, charsMissingForChunk + 1)
+        table.insert(chunks, Z85.encodeChunk(s, unsafeChunk + 1):sub(1, charsMissingForChunk + 1))
     end
     return table.concat(chunks)
 end
