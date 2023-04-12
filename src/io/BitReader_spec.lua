@@ -49,6 +49,35 @@ describe("BitReader's function", function()
         end)
     end)
 
+    describe("new, given an encoded string with an offset, it", function()
+        it("should allocate zero bytes", function()
+            local s = string.pack("BJ", 0, 0)
+            local reader = BitReader.new(s, 2)
+
+            assert.is.same(0, reader.bits)
+            assert.is.same(0, reader.location)
+            assert.is.same(0, #reader.bytes)
+        end)
+
+        it("should allocate one byte", function()
+            local s = string.pack("BJB", 0, 8, 255)
+            local reader = BitReader.new(s, 2)
+
+            assert.is.same(8, reader.bits)
+            assert.is.same(0, reader.location)
+            assert.is.same(1, #reader.bytes)
+        end)
+
+        it("should allocate two bytes", function()
+            local s = string.pack("BJBB", 0, 9, 255, 1)
+            local reader = BitReader.new(s, 2)
+
+            assert.is.same(9, reader.bits)
+            assert.is.same(0, reader.location)
+            assert.is.same(2, #reader.bytes)
+        end)
+    end)
+
     describe("readBits should raise an error when it", function()
         it("is reading an empty stream", function()
             local s = string.pack("J", 0)

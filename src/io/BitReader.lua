@@ -11,17 +11,17 @@ end
 local mt = { __index = BitReader, __tostring = BitReader.tostring }
 
 function BitReader.new(buffer, i)
-    i = i or 0
-    assert(#buffer >= (i-1) + 8, "buffer too small to read bit length header")
+    i = i or 1
+    assert(#buffer >= i + 7, "buffer too small to read bit length header")
     local o = {
         bits = string.unpack("J", buffer, i),
         location = 0,
         bytes = { }
     }
-    local firstContentIndex = i + 8 + 1
+    local firstContentIndex = i + 8
     local lastContentIndex = firstContentIndex + math.ceil(o.bits / 8)
     local contentSize = lastContentIndex - firstContentIndex
-    assert(#buffer >= i + 8 + contentSize, "buffer too small to read " .. contentSize .. " bytes")
+    assert(#buffer >= i + 7 + contentSize, "buffer too small to read " .. contentSize .. " bytes")
     if contentSize > 0 then
         o.bytes = table.pack(string.byte(buffer, firstContentIndex, lastContentIndex))
     end
