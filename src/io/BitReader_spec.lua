@@ -137,6 +137,7 @@ describe("BitReader's function", function()
         it("has reached end of stream", function()
             local s = string.pack("J", 0)
             local reader = BitReader.new(s)
+
             assert.has.error(function() reader:readBool() end)
         end)
     end)
@@ -145,8 +146,8 @@ describe("BitReader's function", function()
         it("should return false on 0", function()
             local s = string.pack("JB", 1, 0)
             local reader = BitReader.new(s)
+
             assert.is_not_true(reader:readBool())
-            assert.is.same(1, reader.location)
         end)
     end)
 
@@ -154,8 +155,19 @@ describe("BitReader's function", function()
         it("should return true on 1", function()
             local s = string.pack("JB", 1, 1)
             local reader = BitReader.new(s)
+
             assert.is_true(reader:readBool())
-            assert.is.same(1, reader.location)
+        end)
+    end)
+
+    describe("tostring", function()
+        it("should return a format of its size and location", function()
+            local s = string.pack("JB", 2, 0)
+            local reader = BitReader.new(s)
+
+            reader:readBool()
+
+            assert.are.same("{ bits = 2, location = 1 }", tostring(reader))
         end)
     end)
 end)

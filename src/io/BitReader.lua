@@ -5,7 +5,7 @@ local function assert_is_int(arg, argName)
 end
 
 function BitReader:tostring()
-    assert(false, "todo")
+    return string.format("{ bits = %d, location = %d }", self.bits, self.location)
 end
 
 local mt = { __index = BitReader, __tostring = BitReader.tostring }
