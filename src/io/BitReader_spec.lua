@@ -50,6 +50,13 @@ describe("BitReader's function", function()
     end)
 
     describe("new, given an encoded string with an offset, it", function()
+        it("should refuse zero or negative offsets", function()
+            local s = string.pack("J", 0)
+
+            assert.has.error(function() BitReader.new(s, 0) end)
+            assert.has.error(function() BitReader.new(s, -1) end)
+        end)
+
         it("should allocate zero bytes", function()
             local s = string.pack("BJ", 0, 0)
             local reader = BitReader.new(s, 2)

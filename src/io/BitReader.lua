@@ -12,7 +12,7 @@ local mt = { __index = BitReader, __tostring = BitReader.tostring }
 
 function BitReader.new(buffer, i)
     i = i or 1
-    assert(#buffer >= i + 7, "buffer too small to read bit length header")
+    assert(i > 0 and #buffer >= i + 7, "buffer too small to read bit length header")
     local o = {
         bits = string.unpack("J", buffer, i),
         location = 0,
