@@ -25,7 +25,7 @@ describe("BitWriter", function()
     end)
 
     it("should create a new instance", function()
-        assert.is_not.same(nil, BitWriter:new())
+        assert.is_not.same(nil, BitWriter.new())
     end)
 
     it("should allocate zero bytes on new", function()
