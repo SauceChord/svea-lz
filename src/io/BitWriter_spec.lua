@@ -157,6 +157,41 @@ describe("BitWriter's function", function()
         end)
     end)
 
+    describe("writeBit", function()
+        it("should write a zero", function()
+            local writer = BitWriter.new()
+
+            writer:writeBit(0)
+
+            assert.is.same(1, writer.bits)
+            assert.is.same(1, #writer.bytes)
+            assert.is_binary("0", writer.bytes[1])
+        end)
+
+        it("should write an one", function()
+            local writer = BitWriter.new()
+
+            writer:writeBit(1)
+
+            assert.is.same(1, writer.bits)
+            assert.is.same(1, #writer.bytes)
+            assert.is_binary("1", writer.bytes[1])
+        end)
+
+        it("should allow truthy and falsy values", function()
+            local writer = BitWriter.new()
+
+            writer:writeBit(nil)
+            writer:writeBit(true)
+            writer:writeBit(false)
+            writer:writeBit(200)
+
+            assert.is.same(4, writer.bits)
+            assert.is.same(1, #writer.bytes)
+            assert.is_binary("1010", writer.bytes[1])
+        end)
+    end)
+
     describe("tostring formats", function()
         it("no bits generates a 8 byte header", function()
             local writer = BitWriter.new()
