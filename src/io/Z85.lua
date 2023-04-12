@@ -26,8 +26,8 @@ function Z85.encode(s)
     end
     local charsMissingForChunk = #s - unsafeChunk
     if charsMissingForChunk > 0 then
-        s = s .. string.rep(string.char(0), 4 - charsMissingForChunk)
-        table.insert(chunks, Z85.encodeChunk(s, unsafeChunk + 1):sub(1, charsMissingForChunk + 1))
+        s = s:sub(unsafeChunk + 1) .. string.rep(string.char(0), 4 - charsMissingForChunk)
+        table.insert(chunks, Z85.encodeChunk(s, 1):sub(1, charsMissingForChunk + 1))
     end
     return table.concat(chunks)
 end
