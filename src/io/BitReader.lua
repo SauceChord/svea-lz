@@ -31,7 +31,7 @@ end
 
 function BitReader:readBits(width)
     assert_is_int(width, "width")
-    assert(width > 0 and self.location + width <= math.min(64, self.bits), "Out of bounds error, can't read " .. width .. " bits")
+    assert(width > 0 and self.location + width <= self.bits and width <= 64, "Out of bounds error, can't read " .. width .. " bits")
     local result = 0
     local bitOffset = 0
     while width > 0 do

@@ -122,6 +122,18 @@ describe("BitReader's function", function()
         end)
     end)
 
+    describe("readBits should no longer have the bug where it", function()
+        it("can't read more than 64 bits", function()
+            local s = string.pack("J", 65) .. string.rep("\0", 9)
+            local reader = BitReader.new(s)
+
+            assert.has.no_error(function() reader:readBits(63) end)
+            assert.has.no_error(function() reader:readBits(1) end)
+            assert.has.no_error(function() reader:readBits(1) end) -- Where it used to error
+            assert.has.error(function() reader:readBits(1) end)
+        end)
+    end)
+
     describe("readBits should return non-zero extended integer(s) when it", function()
         it("is called once with a 3 bit request", function()
             local s = string.pack("JB", 3, 5)
