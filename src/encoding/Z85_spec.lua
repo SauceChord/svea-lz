@@ -1,4 +1,4 @@
-local Z85 = require "io.Z85"
+local Z85 = require "encoding.Z85"
 
 describe("Z85", function()
     describe("encode", function()
