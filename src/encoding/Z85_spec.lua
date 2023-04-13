@@ -82,6 +82,7 @@ describe("Z85", function()
 
         describe("with invalid inputs", function()
             it("should raise an error on nil for example", function()
+---@diagnostic disable-next-line: param-type-mismatch
                 assert.has.error(function() Z85.decode(nil) end)
             end)
         end)
