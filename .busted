@@ -1,7 +1,10 @@
 return {
     _all = {
+        ROOT = {
+            "src/io",
+            "src/encoding",
+            },
         coverage = true,
-        ROOT = {"src/io"},
         verbose = true
     }
 }
