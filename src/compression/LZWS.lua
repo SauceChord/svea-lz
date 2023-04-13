@@ -1,4 +1,5 @@
 local BitWriter = require "io.BitWriter"
+local BitReader = require "io.BitReader"
 
 ---@class LZWS
 ---@field compress function
@@ -87,6 +88,68 @@ function LZWS.compress(s, maxBitWidth)
     end
 
     return encodeToString(codes, codeDictionary.count)
+end
+
+---Returns a dictionary mapping 0-255 to their 1-character string counterparts.
+---@return DefaultStringDictionary
+local function makeDefaultStringDictionary()
+    ---@class DefaultStringDictionary
+    ---@field append function
+    ---@field count integer
+    local default = {}
+    for i = 0, 255 do
+        default[i] = string.char(i)
+    end
+    function default:append(s)
+        self[self.count] = s
+        self.count = self.count + 1
+    end
+    default.count = 256
+    return default
+end
+
+---Decodes Version 0 of LZWS strings
+---@param reader BitReader a utility to read data with
+---@return string result a decoded string
+local function decodeVersion0(reader)
+    local codeWidth = reader:readBits(5)
+    local codeWords = reader:readBits(32)
+
+    -- Quit early if no content
+    if codeWords == 0 then return "" end
+
+    local dictionary = makeDefaultStringDictionary()
+    -- Read first code outside the loop. Because...
+    -- I haven't found a way to generalize for cases like { 97, 256 } ('aaa')
+    -- and the 'XYZYZYXXYZXYZYYYYYYXYZY' test sample.
+    local code = reader:readBits(codeWidth)
+    local word = dictionary[code]
+    local lastWord = word
+    local result = {}
+    table.insert(result, word)
+
+    for i = 2, codeWords do
+        code = reader:readBits(codeWidth)
+        word = dictionary[code]
+        if word == nil then
+            word = lastWord .. lastWord:sub(1,1)
+        end
+        dictionary:append(lastWord .. word)
+        table.insert(result, word)
+        lastWord = word
+    end
+
+    return table.concat(result)
+end
+
+---Decompresses a LZWS compressed string
+---@param s string A LZWS compressed string
+---@return string result A decompressed string
+function LZWS.decompress(s)
+    local reader = BitReader.new(s)
+    local version = reader:readBits(3)
+    assert(version == 0, "LZWS version must be 0 but got " .. version)
+    return decodeVersion0(reader)
 end
 
 return LZWS

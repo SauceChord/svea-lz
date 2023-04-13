@@ -1,7 +1,8 @@
 local LZWS = require "compression.LZWS"
 local BitReader = require "io.BitReader"
+local BitWriter = require "io.BitWriter"
 
--- LZWS contains a predefined dictionary and FIRST_COMPRESSED_CODE is where compressed entries start counting from
+-- LZWS contains a predefined dictionary and FIRST_CODE is where compressed entries start counting from
 local FIRST_CODE = 256
 
 describe("when LZWS", function()
@@ -70,6 +71,34 @@ describe("when LZWS", function()
                 assert.are.same(FIRST_CODE + 5, content:readBits(9), "expects 'RN'  at content index 15")
                 assert.are.same(FIRST_CODE + 7, content:readBits(9), "expects 'OT'  at content index 16")
             end)
+            it("should compress 'XYZYZYXXYZXYZYYYYYYXYZY'", function()
+                -- https://tmager.github.io/COMP150-lzw/background-lzw.html
+                local actual = LZWS.compress("XYZYZYXXYZXYZYYYYYYXYZY")
+                local content = BitReader.new(actual)
+
+                assert.are.same(40 + 13 * 9, content.bits, "content.bits")
+                -- Header tests
+                assert.are.same(0, content:readBits(3), "version")
+                assert.are.same(9, content:readBits(5), "code width")
+                assert.are.same(13, content:readBits(32), "code count")
+                -- Content tests, literal data
+                local CODE_X = string.byte("X")
+                local CODE_Y = string.byte("Y")
+                local CODE_Z = string.byte("Z")
+                assert.are.same(CODE_X, content:readBits(9), "'X' at index 1")
+                assert.are.same(CODE_Y, content:readBits(9), "'Y' at index 2")
+                assert.are.same(CODE_Z, content:readBits(9), "'Z' at index 3")
+                assert.are.same(FIRST_CODE + 1, content:readBits(9), "'YZ' at index 4")
+                assert.are.same(CODE_Y, content:readBits(9), "'Y' at index 5")
+                assert.are.same(CODE_X, content:readBits(9), "'X' at index 6")
+                assert.are.same(FIRST_CODE + 0, content:readBits(9), "'XY' at index 7")
+                assert.are.same(CODE_Z, content:readBits(9), "'Z' at index 8")
+                assert.are.same(FIRST_CODE + 6, content:readBits(9), "'XYZ' at index 9")
+                assert.are.same(CODE_Y, content:readBits(9), "'Y' at index 10")
+                assert.are.same(FIRST_CODE + 9, content:readBits(9), "'YY' at index 11")
+                assert.are.same(FIRST_CODE + 10, content:readBits(9), "'YYY' at index 12")
+                assert.are.same(FIRST_CODE + 8, content:readBits(9), "'XYZY' at index 13")
+            end)
         end)
         describe("with invalid inputs it", function()
             it("should reject bitWidth less than 9", function()
@@ -83,6 +112,83 @@ describe("when LZWS", function()
             end)
             it("should reject decimal bitWidth input", function()
                 assert.has.error(function() LZWS.compress("", 10.5) end, "maxBitWidth must be an integer")
+            end)
+        end)
+    end)
+    describe("decompresses", function()
+        describe("with valid inputs it", function()
+            it("should generate ''", function()
+                local content = BitWriter.new()
+                content:writeBits(0, 3)  -- Version
+                content:writeBits(8, 5)  -- Code width
+                content:writeBits(0, 32) -- Code count
+
+                local actual = LZWS.decompress(tostring(content))
+
+                assert.are.same("", actual, "decompressed string")
+            end)
+            it("should generate 'a'", function()
+                local content = BitWriter.new()
+                content:writeBits(0, 3)  -- Version
+                content:writeBits(8, 5)  -- Code width
+                content:writeBits(1, 32) -- Code count
+                content:writeBits(string.byte("a"), 8)
+
+                local actual = LZWS.decompress(tostring(content))
+
+                assert.are.same("a", actual, "decompressed string")
+            end)
+            it("should generate 'aa'", function()
+                local content = BitWriter.new()
+                content:writeBits(0, 3)  -- Version
+                content:writeBits(8, 5)  -- Code width
+                content:writeBits(2, 32) -- Code count
+                content:writeBits(string.byte("a"), 8)
+                content:writeBits(string.byte("a"), 8)
+
+                local actual = LZWS.decompress(tostring(content))
+
+                assert.are.same("aa", actual, "decompressed string")
+            end)
+            it("should generate 'aaa'", function()
+                local content = BitWriter.new()
+                content:writeBits(0, 3)  -- Version
+                content:writeBits(9, 5)  -- Code width
+                content:writeBits(2, 32) -- Code count
+                content:writeBits(string.byte("a"), 9)
+                content:writeBits(FIRST_CODE, 9)
+
+                local actual = LZWS.decompress(tostring(content))
+
+                assert.are.same("aaa", actual, "decompressed string")
+            end)
+            it("should generate 'XYZYZYXXYZXYZYYYYYYXYZY'", function()
+                -- https://tmager.github.io/COMP150-lzw/background-lzw.html
+                local content = BitWriter.new()
+                local CODE_X = string.byte("X")
+                local CODE_Y = string.byte("Y")
+                local CODE_Z = string.byte("Z")
+                -- Header
+                content:writeBits(0, 3) -- Version
+                content:writeBits(9, 5) -- Code width
+                content:writeBits(13, 32) -- Code count
+                -- Codes
+                content:writeBits(CODE_X, 9)
+                content:writeBits(CODE_Y, 9)
+                content:writeBits(CODE_Z, 9)
+                content:writeBits(FIRST_CODE + 1, 9)
+                content:writeBits(CODE_Y, 9)
+                content:writeBits(CODE_X, 9)
+                content:writeBits(FIRST_CODE + 0, 9)
+                content:writeBits(CODE_Z, 9)
+                content:writeBits(FIRST_CODE + 6, 9)
+                content:writeBits(CODE_Y, 9)
+                content:writeBits(FIRST_CODE + 9, 9)
+                content:writeBits(FIRST_CODE + 10, 9)
+                content:writeBits(FIRST_CODE + 8, 9)
+
+                local actual = LZWS.decompress(tostring(content))
+                assert.are.same("XYZYZYXXYZXYZYYYYYYXYZY", actual)
             end)
         end)
     end)

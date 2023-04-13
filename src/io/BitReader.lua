@@ -1,3 +1,11 @@
+---@class BitReader
+---@field new function
+---@field readBits function
+---@field readBit function
+---@field tostring function
+---@field bits integer The number of bits in this stream. Do not modify unless you know what you are doing.
+---@field location integer The current location counted in bits from beginning. Do not modify unless you know what you are doing.
+---@field bytes table The underlying byte array from which data is read. Do not modify unless you know what you are doing.
 local BitReader = { }
 
 local function assert_is_int(arg, argName)
