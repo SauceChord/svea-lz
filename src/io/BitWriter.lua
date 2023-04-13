@@ -1,3 +1,9 @@
+---@class BitWriter
+---@field bytes table
+---@field writeBits function 
+---@field writeBit function
+---@field tostring function
+---@field new function
 local BitWriter = { }
 
 local function assert_is_int(arg, argName)
