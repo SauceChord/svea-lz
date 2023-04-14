@@ -7,14 +7,6 @@ local BitWriter = require "io.BitWriter"
 local FIRST_CODE = 256
 
 describe("when LZWS", function()
-    describe("uses tables it", function()
-        it("should be case sensitive #prio", function()
-            local t = {}
-            t["hard"] = 2
-            assert.are.not_same(2, t["HARD"])
-            assert.are.same(2, t["hard"])
-        end)
-    end)
     describe("compresses", function()
         describe("with valid inputs it", function()
             it("should generate a header for a zero width string", function()
@@ -52,7 +44,7 @@ describe("when LZWS", function()
                 assert.are.same(string.byte("a"), content:readBits(9), "'a'")
                 assert.are.same(FIRST_CODE, content:readBits(9), "compressed code")
             end)
-            it("should compress 'TOBEORNOTTOBEORTOBEORNOT' #bughunt", function()
+            it("should compress 'TOBEORNOTTOBEORTOBEORNOT'", function()
                 local actual = LZWS.compress("TOBEORNOTTOBEORTOBEORNOT")
                 local content = BitReader.new(actual)
 
@@ -293,7 +285,7 @@ describe("when LZWS", function()
                 local actual = LZWS.decompress(tostring(content))
                 assert.are.same("XYZYZYXXYZXYZYYYYYYXYZY", actual)
             end)
-            it("should generate 'XYZYZYXXYZXYZYYYYYYXYZYXYZYZY' #focus", function()
+            it("should generate 'XYZYZYXXYZXYZYYYYYYXYZYXYZYZY'", function()
                 local content = BitWriter.new()
                 local CODE_X = string.byte("X")
                 local CODE_Y = string.byte("Y")
