@@ -12,16 +12,30 @@ local function assert_is_int(param, paramName)
     assert(type(param) == "number" and math.floor(param) == param, paramName .. " must be an integer")
 end
 
----Makes a new dictionary with 256 entries, for all characters
----@return DefaultDictionary dictionary Indices 0-255, with a .count field
-local function makeDefaultCodeDictionary()
-    ---@class DefaultDictionary
-    ---@field count integer
-    local default = {}
-    for i = 0, 255 do default[i] = i end
-    default.count = 256
-    return default
+local function makeStringToCode()
+    local t = {}
+    for i = 0, 255 do
+        t[string.char(i)] = i
+    end
+    return t, 256
 end
+
+local function makeCodeToString()
+    local t = {}
+
+    for i = 0, 255 do
+        t[i] = string.char(i)
+    end
+
+    function t:append(lastWord, word)
+        self[self.count] = lastWord .. word
+        self.count = self.count + 1
+    end
+
+    t.count = 256
+    return t
+end
+
 
 ---Writes header and codes for version 0 of LZWS content.
 ---@param writer BitWriter Utility to write bits with.
@@ -60,52 +74,42 @@ function LZWS.compress(s, maxBitWidth)
     assert_is_int(maxBitWidth, "maxBitWidth")
     assert(maxBitWidth >= 9 and maxBitWidth <= 24, "bitCount has to be in range 9 to 24")
 
-    local codeDictionary = makeDefaultCodeDictionary()
-    local codes = {}
+    local stringToCode, count = makeStringToCode()
+    local output = {}
+
+    if #s == 0 then
+        return encodeToString(output, count)
+    end
+
     local maxCodes = 2 ^ maxBitWidth
-    local currentWord = 0
-    local hasUnrecordedWord = false
+    local currentWord = ""
+    local lastKnownWord = nil
+    local nextCharacter = nil
 
-    local bytes = table.pack(s:byte(1, #s))
-
-    for i = 1, #bytes do
-        local nextCharacter = bytes[i]
-        local newWord = currentWord << 8 | nextCharacter
-        if codeDictionary[newWord] and #codes < maxCodes then
+    for i = 1, #s do
+        nextCharacter = s:sub(i,i)
+        local newWord = currentWord .. nextCharacter
+        if (stringToCode[newWord] and #output < maxCodes)  then
+            lastKnownWord = newWord
             currentWord = newWord
-            hasUnrecordedWord = true
         else
-            codeDictionary[newWord] = codeDictionary.count
-            table.insert(codes, codeDictionary[currentWord])
-            codeDictionary.count = codeDictionary.count + 1
+            table.insert(output, stringToCode[currentWord])
+            stringToCode[newWord] = count
+            count = count + 1
             currentWord = nextCharacter
-            hasUnrecordedWord = false
+            lastKnownWord = nil
         end
     end
 
-    if hasUnrecordedWord then
-        table.insert(codes, codeDictionary[currentWord])
+    if lastKnownWord then
+        local code = stringToCode[lastKnownWord]
+        table.insert(output, code)
+    else
+        local code = stringToCode[nextCharacter]
+        table.insert(output, code)
     end
 
-    return encodeToString(codes, codeDictionary.count)
-end
-
----Returns a dictionary mapping 0-255 to their 1-character string counterparts.
----@return DefaultStringDictionary
-local function makeDefaultStringDictionary()
-    ---@class DefaultStringDictionary
-    ---@field append function
-    ---@field count integer
-    local default = {}
-    for i = 0, 255 do
-        default[i] = string.char(i)
-    end
-    function default:append(s)
-        self[self.count] = s
-        self.count = self.count + 1
-    end
-    default.count = 256
-    return default
+    return encodeToString(output, count)
 end
 
 ---Decodes Version 0 of LZWS strings
@@ -118,7 +122,7 @@ local function decodeVersion0(reader)
     -- Quit early if no content
     if codeWords == 0 then return "" end
 
-    local dictionary = makeDefaultStringDictionary()
+    local dictionary = makeCodeToString()
     -- Read first code outside the loop. Because...
     -- I haven't found a way to generalize for cases like { 97, 256 } ('aaa')
     -- and the 'XYZYZYXXYZXYZYYYYYYXYZY' test sample.
@@ -132,9 +136,9 @@ local function decodeVersion0(reader)
         code = reader:readBits(codeWidth)
         word = dictionary[code]
         if word == nil then
-            word = lastWord .. lastWord:sub(1,1)
+            word = lastWord .. lastWord:sub(1, 1)
         end
-        dictionary:append(lastWord .. word)
+        dictionary:append(lastWord, word:sub(1, 1))
         table.insert(result, word)
         lastWord = word
     end
