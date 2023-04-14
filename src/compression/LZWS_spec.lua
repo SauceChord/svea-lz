@@ -31,6 +31,19 @@ describe("when LZWS", function()
                 -- Content tests
                 assert.are.same(string.byte("a"), content:readBits(8), "expects 'a' in contents")
             end)
+            it("should output two codes for two repeating characters", function()
+                local actual = LZWS.compress("aa")
+                local content = BitReader.new(actual)
+
+                assert.are.same(40 + 2 * 9, content.bits, "content.bits")
+                -- Header tests
+                assert.are.same(0, content:readBits(3), "version")
+                assert.are.same(9, content:readBits(5), "code width")
+                assert.are.same(2, content:readBits(32), "code count")
+                -- Content tests
+                assert.are.same(string.byte("a"), content:readBits(9), "'a', index 1")
+                assert.are.same(string.byte("a"), content:readBits(9), "'a', index 2")
+            end)
             it("should output two codes for three repeating characters", function()
                 local actual = LZWS.compress("aaa")
                 local content = BitReader.new(actual)
