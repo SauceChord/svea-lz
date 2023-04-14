@@ -1,14 +1,12 @@
 ---@class BitWriter
 ---@field bytes table
 ---@field writeBits function 
----@field writeBit function
+---@field writeBool function
 ---@field tostring function
 ---@field new function
 local BitWriter = { }
 
-local function assert_is_int(arg, argName)
-    assert(type(arg) == "number" and math.floor(arg) == arg, argName .. " must be an integer")
-end
+require "asserts.Extra"
 
 function BitWriter:writeBits(value, width)
     assert_is_int(value, "value")
@@ -25,7 +23,7 @@ function BitWriter:writeBits(value, width)
     end
 end
 
-function BitWriter:writeBit(bit)
+function BitWriter:writeBool(bit)
     bit = bit == 0 and 0 or bit and 1 or 0
     local byteIndex = self.bits // 8 + 1
     local bitIndex = self.bits % 8

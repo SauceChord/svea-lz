@@ -5,7 +5,7 @@ return {
             "src/encoding",
             "src/compression",
             },
-        coverage = true,
+        coverage = false,
         verbose = false
     }
 }

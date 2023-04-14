@@ -1,5 +1,7 @@
 local Z85 = {}
 
+require "asserts.Extra"
+
 -- Initialize Lookup tables
 local _encode = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#"
 local _decode = { } -- maps an ascii character code to a number in the range of 0-84
@@ -29,7 +31,7 @@ end
 ---@param s string
 ---@return string
 function Z85.encode(s)
-    assert(type(s) == "string", "Can only encode strings but was passed: " .. type(s))
+    assert_is_string(s, "s")
     local chunks, unsafeChunk = {}, (#s // 4) * 4
     for i = 1, unsafeChunk, 4 do
         table.insert(chunks, encodeChunk(s, i))
@@ -45,7 +47,7 @@ end
 ---@param s string
 ---@return string
 function Z85.decode(s)
-    assert(type(s) == "string", "Can only decode strings but was passed: " .. type(s))
+    assert_is_string(s, "s")
     local chunks, unsafeChunk = {}, (#s // 5) * 5
     for i = 1, unsafeChunk, 5 do
         table.insert(chunks, string.pack(">I4", decodeChunkToUInt32(s, i)))

@@ -1,5 +1,5 @@
 local say = require "say"
-
+local BitWriter = require "io.BitWriter"
 local function is_binary(state, arguments)
     return tonumber(arguments[1], 2) == arguments[2]
 end
@@ -10,16 +10,6 @@ say:set("assertion.is_binary.negative", "Expected binary %s to not equal %s") --
 assert:register("assertion", "is_binary", is_binary, "assertion.is_binary.positive", "assertion.is_binary.negative")
 
 describe("BitWriter's function", function()
-    local BitWriter
-
-    setup(function()
-        BitWriter = require "io.BitWriter"
-    end)
-
-    teardown(function()
-        BitWriter = nil
-    end)
-
     describe("new", function()
         it("should allocate zero bytes on new", function()
             local writer = BitWriter.new()
@@ -157,11 +147,11 @@ describe("BitWriter's function", function()
         end)
     end)
 
-    describe("writeBit", function()
+    describe("writeBool", function()
         it("should write a zero", function()
             local writer = BitWriter.new()
 
-            writer:writeBit(0)
+            writer:writeBool(0)
 
             assert.is.same(1, writer.bits)
             assert.is.same(1, #writer.bytes)
@@ -171,7 +161,7 @@ describe("BitWriter's function", function()
         it("should write an one", function()
             local writer = BitWriter.new()
 
-            writer:writeBit(1)
+            writer:writeBool(1)
 
             assert.is.same(1, writer.bits)
             assert.is.same(1, #writer.bytes)
@@ -181,10 +171,10 @@ describe("BitWriter's function", function()
         it("should allow truthy and falsy values", function()
             local writer = BitWriter.new()
 
-            writer:writeBit(nil)
-            writer:writeBit(true)
-            writer:writeBit(false)
-            writer:writeBit(200)
+            writer:writeBool(nil)
+            writer:writeBool(true)
+            writer:writeBool(false)
+            writer:writeBool(200)
 
             assert.is.same(4, writer.bits)
             assert.is.same(1, #writer.bytes)

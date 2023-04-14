@@ -8,9 +8,7 @@
 ---@field bytes table The underlying byte array from which data is read. Do not modify unless you know what you are doing.
 local BitReader = { }
 
-local function assert_is_int(arg, argName)
-    assert(type(arg) == "number" and math.floor(arg) == arg, argName .. " must be an integer")
-end
+require "asserts.Extra"
 
 function BitReader:tostring()
     return string.format("{ bits = %d, location = %d }", self.bits, self.location)
@@ -20,7 +18,7 @@ local mt = { __index = BitReader, __tostring = BitReader.tostring }
 
 function BitReader.new(buffer, i)
     i = i or 1
-    assert(i > 0 and #buffer >= i + 7, "buffer too small to read bit length header")
+    assert_is_in_range(1, #buffer - 7, i, "i")
     local o = {
         bits = string.unpack("J", buffer, i),
         location = 0,
@@ -39,7 +37,8 @@ end
 
 function BitReader:readBits(width)
     assert_is_int(width, "width")
-    assert(width > 0 and self.location + width <= self.bits and width <= 64, "Out of bounds error, can't read " .. width .. " bits")
+    assert_is_in_range(1, 64, width, "width")
+    assert_is_in_range(0, self.bits - width, self.location, "location")
     local result = 0
     local bitOffset = 0
     while width > 0 do
@@ -55,7 +54,7 @@ function BitReader:readBits(width)
 end
 
 function BitReader:readBool()
-    assert(self.location < self.bits, "Out of bounds error, can't read 1 bit")
+    assert_is_in_range(0, self.bits, self.location, "location")
     local byteIndex = self.location // 8 + 1
     local bitIndex = self.location % 8
     self.location = self.location + 1
