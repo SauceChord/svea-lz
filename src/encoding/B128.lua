@@ -4,7 +4,7 @@ local B128 = {}
 ---Encodes a string to its binary base 128 string.
 ---The resulting encoded string contain characters whole byte is 0 to 127.
 ---@param s string String to encode to base 128.
----@return string encoded Base 128 encoded string.
+---@return string encodedString Binary base 128 encoded string.
 function B128.encode(s)
     local len = #s
     if len == 0 then return "" end
@@ -28,7 +28,7 @@ function B128.encode(s)
 end
 
 ---Decodes a binary base 128 string to an original string previously encoded.
----@param s string String to decode from base 128.
+---@param s string String to decode from binary base 128.
 ---@return string decodedString
 function B128.decode(s)
     local len = #s

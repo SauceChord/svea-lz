@@ -122,5 +122,18 @@ describe("B128", function()
                 end
             end)
         end)
+        describe("encode and decode #end-to-end", function()
+            it("should process this spec file", function()
+                local f = assert(io.open("src/encoding/B128_spec.lua", "r"))
+                local contents = f:read("*all")
+                f:close()
+
+                local encoded = B128.encode(contents)
+                local decoded = B128.decode(encoded)
+
+                assert.is_true(#encoded <= math.ceil(#contents * 8 / 7), "#encoded should be approx 114,3% of #contents")
+                assert.is_true(decoded == contents, "encoding/decoding error")
+            end)
+        end)
     end)
 end)
